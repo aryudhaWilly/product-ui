@@ -4,7 +4,6 @@ import { fetchProducts, createProduct, updateProduct, deleteProduct } from "./fe
 import { Container, Row, Col, Card, Button, Spinner, Modal, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import "./App.css"; // Import your CSS file
 
 function App() {
     const dispatch = useDispatch();
