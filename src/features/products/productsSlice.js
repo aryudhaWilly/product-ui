@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import apiClient from "./apiClient"; // Import the configured axios instance
 
 const initialState = {
     products: [],
@@ -9,22 +9,22 @@ const initialState = {
 
 // Thunks
 export const fetchProducts = createAsyncThunk("products/fetchProducts", async () => {
-    const response = await axios.get("http://localhost:8000/api/products");
+    const response = await apiClient.get("/products");
     return response.data;
 });
 
 export const createProduct = createAsyncThunk("products/createProduct", async (newProduct) => {
-    const response = await axios.post("http://localhost:8000/api/products", newProduct);
+    const response = await apiClient.post("/products", newProduct);
     return response.data;
 });
 
 export const updateProduct = createAsyncThunk("products/updateProduct", async (updatedProduct) => {
-    const response = await axios.put(`http://localhost:8000/api/products/${updatedProduct.id}`, updatedProduct);
+    const response = await apiClient.put(`/products/${updatedProduct.id}`, updatedProduct);
     return response.data;
 });
 
 export const deleteProduct = createAsyncThunk("products/deleteProduct", async (id) => {
-    await axios.delete(`http://localhost:8000/api/products/${id}`);
+    await apiClient.delete(`/products/${id}`);
     return id;
 });
 

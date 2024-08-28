@@ -1,13 +1,13 @@
+// App.js
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchProducts, createProduct, updateProduct, deleteProduct } from "./features/products/productsSlice";
+import { fetchProducts, deleteProduct, updateProduct, createProduct } from "./features/products/productsSlice";
 import { Container, Row, Col, Card, Button, Spinner, Modal, Form } from "react-bootstrap";
 import Swal from "sweetalert2";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 function App() {
     const dispatch = useDispatch();
-    const products = useSelector((state) => state.products.products);
+    const productsResponse = useSelector((state) => state.products.products);
     const productStatus = useSelector((state) => state.products.status);
 
     const [show, setShow] = useState(false);
@@ -18,7 +18,6 @@ function App() {
         price: "",
         discount: "",
     });
-    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (productStatus === "idle") {
@@ -35,7 +34,6 @@ function App() {
             price: "",
             discount: "",
         });
-        setErrors({});
     };
 
     const handleShow = () => setShow(true);
@@ -63,13 +61,25 @@ function App() {
     };
 
     const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        // Prevent negative values for price and discount
+        if ((name === "price" || name === "discount") && value < 0) {
+            Swal.fire({
+                icon: "error",
+                title: "Invalid Input",
+                text: `${name === "price" ? "Price" : "Discount"} cannot be negative.`,
+            });
+            return;
+        }
+
         setNewProduct({
             ...newProduct,
-            [e.target.name]: e.target.value,
+            [name]: value,
         });
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const { product_name, category, price, discount } = newProduct;
 
         let errors = {};
@@ -103,25 +113,30 @@ function App() {
             return;
         }
 
-        if (editingProduct) {
-            dispatch(updateProduct({ ...newProduct, id: editingProduct.id }))
-                .then(() => {
-                    Swal.fire("Success", "Product updated successfully.", "success");
-                })
-                .catch((error) => {
-                    Swal.fire("Error", "There was an error updating the product.", "error");
-                });
-        } else {
-            dispatch(createProduct(newProduct))
-                .then(() => {
-                    Swal.fire("Success", "Product added successfully.", "success");
-                })
-                .catch((error) => {
-                    Swal.fire("Error", "There was an error adding the product.", "error");
-                });
+        try {
+            let resultAction;
+            if (editingProduct) {
+                resultAction = await dispatch(updateProduct({ ...newProduct, id: editingProduct.id }));
+            } else {
+                resultAction = await dispatch(createProduct(newProduct));
+            }
+
+            if (resultAction.meta.requestStatus === "fulfilled") {
+                Swal.fire("Success", editingProduct ? "Product updated successfully." : "Product added successfully.", "success");
+            } else {
+                const errorMessage = resultAction.error.message || "An error occurred while processing the request.";
+                Swal.fire("Error", errorMessage, "error");
+                console.log(errorMessage);
+            }
+        } catch (error) {
+            Swal.fire("Error", "An unexpected error occurred.", "error");
+        } finally {
+            handleClose();
         }
-        handleClose();
     };
+
+    // Extract the array of products from the response object
+    const products = productsResponse?.data || [];
 
     return (
         <Container className="mt-4">
@@ -132,7 +147,7 @@ function App() {
                 </div>
             ) : (
                 <>
-                    <Button className="mb-4 btn-custom" onClick={handleShow}>
+                    <Button className="mb-4 btn-custom" variant="primary" onClick={handleShow}>
                         Add Product
                     </Button>
                     <Row>
@@ -152,7 +167,7 @@ function App() {
                                     <Card.Footer>
                                         <Button
                                             variant="info"
-                                            className="btn-custom me-2"
+                                            className="me-2"
                                             onClick={() => {
                                                 setEditingProduct(product);
                                                 setNewProduct({
@@ -166,7 +181,7 @@ function App() {
                                         >
                                             Edit
                                         </Button>
-                                        <Button variant="danger" className="btn-custom-danger" onClick={() => handleDelete(product.id)}>
+                                        <Button variant="danger" onClick={() => handleDelete(product.id)}>
                                             Delete
                                         </Button>
                                     </Card.Footer>
@@ -178,50 +193,27 @@ function App() {
             )}
 
             {/* Modal for Add/Edit Product */}
-            <Modal show={show} onHide={handleClose} className="modal-animation">
+            <Modal show={show} onHide={handleClose}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editingProduct ? "Edit Product" : "Add Product"}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group className="mb-3" controlId="formProductName">
+                        <Form.Group className="mb-3" controlId="product_name">
                             <Form.Label>Product Name</Form.Label>
-                            <Form.Control type="text" name="product_name" value={newProduct.product_name} onChange={handleChange} placeholder="Enter product name" className={errors.product_name ? "input-error" : ""} />
-                            {errors.product_name && (
-                                <Form.Text className="text-danger">
-                                    <FaTimesCircle /> {errors.product_name}
-                                </Form.Text>
-                            )}
+                            <Form.Control type="text" placeholder="Enter product name" name="product_name" value={newProduct.product_name} onChange={handleChange} />
                         </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formCategory">
+                        <Form.Group className="mb-3" controlId="category">
                             <Form.Label>Category</Form.Label>
-                            <Form.Control type="text" name="category" value={newProduct.category} onChange={handleChange} placeholder="Enter category" className={errors.category ? "input-error" : ""} />
-                            {errors.category && (
-                                <Form.Text className="text-danger">
-                                    <FaTimesCircle /> {errors.category}
-                                </Form.Text>
-                            )}
+                            <Form.Control type="text" placeholder="Enter category" name="category" value={newProduct.category} onChange={handleChange} />
                         </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formPrice">
+                        <Form.Group className="mb-3" controlId="price">
                             <Form.Label>Price</Form.Label>
-                            <Form.Control type="number" step="0.01" name="price" value={newProduct.price} onChange={handleChange} placeholder="Enter price" className={errors.price ? "input-error" : ""} />
-                            {errors.price && (
-                                <Form.Text className="text-danger">
-                                    <FaTimesCircle /> {errors.price}
-                                </Form.Text>
-                            )}
+                            <Form.Control type="number" placeholder="Enter price" name="price" value={newProduct.price} onChange={handleChange} />
                         </Form.Group>
-
-                        <Form.Group className="mb-3" controlId="formDiscount">
+                        <Form.Group className="mb-3" controlId="discount">
                             <Form.Label>Discount</Form.Label>
-                            <Form.Control type="number" step="0.01" name="discount" value={newProduct.discount} onChange={handleChange} placeholder="Enter discount" className={errors.discount ? "input-error" : ""} />
-                            {errors.discount && (
-                                <Form.Text className="text-danger">
-                                    <FaTimesCircle /> {errors.discount}
-                                </Form.Text>
-                            )}
+                            <Form.Control type="number" placeholder="Enter discount" name="discount" value={newProduct.discount} onChange={handleChange} />
                         </Form.Group>
                     </Form>
                 </Modal.Body>
@@ -229,7 +221,7 @@ function App() {
                     <Button variant="secondary" onClick={handleClose}>
                         Close
                     </Button>
-                    <Button variant="primary" onClick={handleSave} className="btn-custom">
+                    <Button variant="primary" onClick={handleSave}>
                         Save Changes
                     </Button>
                 </Modal.Footer>
