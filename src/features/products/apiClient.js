@@ -1,16 +1,14 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-    baseURL: "http://localhost:8000/api", // Replace with your API URL
+    baseURL: "http://localhost:8000/api/products/",
 });
 
-// Static token
 const AUTH_TOKEN = "pt-indo-emkay-abadi";
 
-// Add a request interceptor to include the static token
 apiClient.interceptors.request.use(
     (config) => {
-        config.headers.Authorization = `Bearer ${AUTH_TOKEN}`; // Attach the static token
+        config.headers.Authorization = `Bearer ${AUTH_TOKEN}`;
         return config;
     },
     (error) => {
