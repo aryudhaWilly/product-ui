@@ -1,4 +1,3 @@
-// App.js
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProducts, deleteProduct, updateProduct, createProduct } from "./features/products/productsSlice";
@@ -61,21 +60,9 @@ function App() {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-
-        // Prevent negative values for price and discount
-        if ((name === "price" || name === "discount") && value < 0) {
-            Swal.fire({
-                icon: "error",
-                title: "Invalid Input",
-                text: `${name === "price" ? "Price" : "Discount"} cannot be negative.`,
-            });
-            return;
-        }
-
         setNewProduct({
             ...newProduct,
-            [name]: value,
+            [e.target.name]: e.target.value,
         });
     };
 
@@ -135,8 +122,8 @@ function App() {
         }
     };
 
-    // Extract the array of products from the response object
-    const products = productsResponse?.data || [];
+    // Ensure products is always an array
+    const products = Array.isArray(productsResponse) ? productsResponse : [];
 
     return (
         <Container className="mt-4">
@@ -199,21 +186,24 @@ function App() {
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group className="mb-3" controlId="product_name">
+                        <Form.Group className="mb-3" controlId="formProductName">
                             <Form.Label>Product Name</Form.Label>
-                            <Form.Control type="text" placeholder="Enter product name" name="product_name" value={newProduct.product_name} onChange={handleChange} />
+                            <Form.Control type="text" name="product_name" value={newProduct.product_name} onChange={handleChange} placeholder="Enter product name" />
                         </Form.Group>
-                        <Form.Group className="mb-3" controlId="category">
+
+                        <Form.Group className="mb-3" controlId="formCategory">
                             <Form.Label>Category</Form.Label>
-                            <Form.Control type="text" placeholder="Enter category" name="category" value={newProduct.category} onChange={handleChange} />
+                            <Form.Control type="text" name="category" value={newProduct.category} onChange={handleChange} placeholder="Enter category" />
                         </Form.Group>
-                        <Form.Group className="mb-3" controlId="price">
+
+                        <Form.Group className="mb-3" controlId="formPrice">
                             <Form.Label>Price</Form.Label>
-                            <Form.Control type="number" placeholder="Enter price" name="price" value={newProduct.price} onChange={handleChange} />
+                            <Form.Control type="number" step="0.01" name="price" value={newProduct.price} onChange={handleChange} placeholder="Enter price" />
                         </Form.Group>
-                        <Form.Group className="mb-3" controlId="discount">
+
+                        <Form.Group className="mb-3" controlId="formDiscount">
                             <Form.Label>Discount</Form.Label>
-                            <Form.Control type="number" placeholder="Enter discount" name="discount" value={newProduct.discount} onChange={handleChange} />
+                            <Form.Control type="number" step="0.01" name="discount" value={newProduct.discount} onChange={handleChange} placeholder="Enter discount" />
                         </Form.Group>
                     </Form>
                 </Modal.Body>

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-    baseURL: "http://localhost:8000/api/products/",
+    baseURL: "http://localhost:8000/api/",
 });
 
 const AUTH_TOKEN = "pt-indo-emkay-abadi";

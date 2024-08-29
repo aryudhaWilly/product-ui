@@ -1,38 +1,38 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import apiClient from "./apiClient"; // Import the apiClient
+import apiClient from "./apiClient";
 
-const initialState = {
-    products: [],
-    status: "idle",
-    error: null,
-};
-
-// Thunks
 export const fetchProducts = createAsyncThunk("products/fetchProducts", async () => {
-    const response = await apiClient.get("/");
-    return response.data;
+    const response = await apiClient.get("/products");
+    return response.data.data;
 });
 
+// Create a new product
 export const createProduct = createAsyncThunk("products/createProduct", async (newProduct) => {
-    const response = await apiClient.post("/", newProduct);
+    const response = await apiClient.post("/products", newProduct);
     return response.data;
 });
 
-export const updateProduct = createAsyncThunk("products/updateProduct", async (updatedProduct) => {
-    const response = await apiClient.put(`/${updatedProduct.id}`, updatedProduct);
+// Update an existing product
+export const updateProduct = createAsyncThunk("products/updateProduct", async (product) => {
+    const response = await apiClient.put(`/products/${product.id}`, product);
     return response.data;
 });
 
+// Delete a product
 export const deleteProduct = createAsyncThunk("products/deleteProduct", async (id) => {
-    await apiClient.delete(`/${id}`);
+    await apiClient.delete(`/products/${id}`);
     return id;
 });
 
 const productsSlice = createSlice({
     name: "products",
-    initialState,
+    initialState: {
+        products: [],
+        status: "idle",
+        error: null,
+    },
     reducers: {},
-    extraReducers(builder) {
+    extraReducers: (builder) => {
         builder
             .addCase(fetchProducts.pending, (state) => {
                 state.status = "loading";
